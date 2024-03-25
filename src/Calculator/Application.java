@@ -9,8 +9,7 @@ import java.util.Scanner;
 public class Application {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        Character[] simpleOperationsArray = {'+', '-', '*', '/'};
-        Calculator calculator = SimpleCalculatorImpl.getInstance(Arrays.asList(simpleOperationsArray));
+        Calculator calculator = SimpleCalculatorImpl.getInstance();
 
 
         System.out.println("Enter the expression to evaluate. Type 'exit' to quit.");

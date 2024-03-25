@@ -3,24 +3,21 @@ package Calculator.ServiceImpl;
 import Calculator.Enum.Operator;
 import Calculator.Service.Calculator;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static Calculator.Enum.Operator.fromSymbol;
 
 public class SimpleCalculatorImpl implements Calculator {
-
-    private final List<Character> operations;
     private static SimpleCalculatorImpl instance;
-    private SimpleCalculatorImpl(List<Character> operations){
-        this.operations = operations;
+    private SimpleCalculatorImpl(){
     }
-    public static SimpleCalculatorImpl getInstance(List<Character> operations) {
+    public static SimpleCalculatorImpl getInstance() {
         if (instance == null) {
             synchronized (SimpleCalculatorImpl.class){
                 if (instance == null) {
-                    instance = new SimpleCalculatorImpl(operations);
+                    instance = new SimpleCalculatorImpl();
                 }
             }
 
@@ -29,7 +26,7 @@ public class SimpleCalculatorImpl implements Calculator {
     }
 
     @Override
-        public double calculate(String expression) throws IllegalArgumentException, ArithmeticException, UnsupportedOperationException {
+    public double calculate(String expression) throws IllegalArgumentException, ArithmeticException, UnsupportedOperationException {
         if (!isValidExpression(expression)) {
             throw new IllegalArgumentException("Invalid input for calculation. Please enter a valid expression.");
         }
@@ -47,7 +44,7 @@ public class SimpleCalculatorImpl implements Calculator {
                     numbers.push(Double.parseDouble(num));
                     num = "";
                 }
-                if (operations.contains(character)) {
+                if ( Arrays.asList(Operator.values()).contains(fromSymbol(character))) {
                     while (!operators.isEmpty() && precedence(character) <= precedence(operators.peek())) {
                         numbers.push(applyOperation(fromSymbol(operators.pop()), numbers.pop(), numbers.pop()));
                     }
@@ -87,10 +84,10 @@ public class SimpleCalculatorImpl implements Calculator {
             case MULTIPLICATION:
                 return a * b;
             case DIVISION:
-                if (b == 0) {
+                if (a == 0) {
                     throw new ArithmeticException("Division by zero");
                 }
-                return a / b;
+                return b / a;
             default:
                 throw new UnsupportedOperationException("Operator '" + operator + "' is not supported by the application.");
         }
