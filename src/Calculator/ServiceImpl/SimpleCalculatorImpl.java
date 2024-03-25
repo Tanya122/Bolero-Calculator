@@ -2,12 +2,12 @@ package Calculator.ServiceImpl;
 
 import Calculator.Enum.Operator;
 import Calculator.Service.Calculator;
-import Calculator.Operations.*;
 
 import java.util.List;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static Calculator.Enum.Operator.fromSymbol;
 
 public class SimpleCalculatorImpl implements Calculator {
 
@@ -18,13 +18,18 @@ public class SimpleCalculatorImpl implements Calculator {
     }
     public static SimpleCalculatorImpl getInstance(List<Character> operations) {
         if (instance == null) {
-            instance = new SimpleCalculatorImpl(operations);
+            synchronized (SimpleCalculatorImpl.class){
+                if (instance == null) {
+                    instance = new SimpleCalculatorImpl(operations);
+                }
+            }
+
         }
         return instance;
     }
 
     @Override
-        public double calculate(String expression) throws IllegalArgumentException, ArithmeticException {
+        public double calculate(String expression) throws IllegalArgumentException, ArithmeticException, UnsupportedOperationException {
         if (!isValidExpression(expression)) {
             throw new IllegalArgumentException("Invalid input for calculation. Please enter a valid expression.");
         }
@@ -33,23 +38,22 @@ public class SimpleCalculatorImpl implements Calculator {
         String num = "";
 
         for (int i = 0; i < expression.length(); i++) {
-            char ch = expression.charAt(i);
+            char character = expression.charAt(i);
 
-            if (Character.isDigit(ch) || ch == '.') {
-                num = num.concat(String.valueOf(ch));
+            if (Character.isDigit(character) || character == '.') {
+                num = num.concat(String.valueOf(character));
             } else {
                 if (num.length() > 0) {
                     numbers.push(Double.parseDouble(num));
                     num = "";
                 }
-                if (operations.contains(ch)) {
-                    while (!operators.isEmpty() && precedence(ch) <= precedence(operators.peek())) {
-                        char operator = operators.pop();
-                        double a = numbers.pop();
-                        double b = numbers.pop();
-                        numbers.push(applyOperation(operator, a, b));
+                if (operations.contains(character)) {
+                    while (!operators.isEmpty() && precedence(character) <= precedence(operators.peek())) {
+                        numbers.push(applyOperation(fromSymbol(operators.pop()), numbers.pop(), numbers.pop()));
                     }
-                    operators.push(ch);
+                    operators.push(character);
+                } else {
+                    throw new UnsupportedOperationException("Operator '" + character + "' is not supported by the application.");
                 }
             }
         }
@@ -59,7 +63,7 @@ public class SimpleCalculatorImpl implements Calculator {
         }
 
         while (!operators.isEmpty()) {
-            numbers.push(applyOperation(operators.pop(), numbers.pop(), numbers.pop()));
+            numbers.push(applyOperation(fromSymbol(operators.pop()), numbers.pop(), numbers.pop()));
         }
 
         return numbers.pop();
@@ -74,22 +78,25 @@ public class SimpleCalculatorImpl implements Calculator {
         return 0;
     }
 
-    private double applyOperation(char operator, double a, double b) {
-        OperationHandler additionOperationHandler = Addition.getInstance();
-        OperationHandler subtractionOperationHandler = Subtraction.getInstance();
-        OperationHandler multiplicationOperationHandler = Multiplication.getInstance();
-        OperationHandler divisionOperationHandler = Division.getInstance();
-
-        divisionOperationHandler.setNextHandler(multiplicationOperationHandler);
-        multiplicationOperationHandler.setNextHandler(additionOperationHandler);
-        additionOperationHandler.setNextHandler(subtractionOperationHandler);
-
-        Operator operatorEnum = Operator.fromSymbol(operator);
-
-        return divisionOperationHandler.handle(operatorEnum, a, b);
+    private double applyOperation(Operator operator, double a, double b) {
+        switch (operator) {
+            case ADDITION:
+                return a + b;
+            case SUBTRACTION:
+                return a - b;
+            case MULTIPLICATION:
+                return a * b;
+            case DIVISION:
+                if (b == 0) {
+                    throw new ArithmeticException("Division by zero");
+                }
+                return a / b;
+            default:
+                throw new UnsupportedOperationException("Operator '" + operator + "' is not supported by the application.");
+        }
     }
 
-    static boolean isValidExpression(String input) {
+    private boolean isValidExpression(String input) {
         Pattern pattern = Pattern.compile("(\\d+(\\.\\d+)?)(\\s*[-+*/]\\s*\\d+(\\.\\d+)?)*");
         Matcher matcher = pattern.matcher(input);
         return matcher.matches();

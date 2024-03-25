@@ -1,8 +1,7 @@
 package Calculator;
 
-import Calculator.Enum.CalculatorType;
-import Calculator.Factory.CalculatorFactory;
 import Calculator.Service.Calculator;
+import Calculator.ServiceImpl.SimpleCalculatorImpl;
 
 import java.util.Arrays;
 import java.util.Scanner;
@@ -11,7 +10,7 @@ public class Application {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         Character[] simpleOperationsArray = {'+', '-', '*', '/'};
-        Calculator calculator = CalculatorFactory.getInstance(CalculatorType.SIMPLE, Arrays.asList(simpleOperationsArray));
+        Calculator calculator = SimpleCalculatorImpl.getInstance(Arrays.asList(simpleOperationsArray));
 
 
         System.out.println("Enter the expression to evaluate. Type 'exit' to quit.");
@@ -28,10 +27,13 @@ public class Application {
                 System.out.println("Result: " + result);
             } catch ( IllegalArgumentException e) {
                 System.out.println("Error: " + e.getMessage());
+            } catch (UnsupportedOperationException e) {
+                System.out.println("Operator Error: " + e.getMessage());
             } catch (ArithmeticException e) {
                 System.out.println("Arithmetic Error: " + e.getMessage());
             }
         }
+        scanner.close();
         System.out.println("Exiting the calculator...");
     }
 
